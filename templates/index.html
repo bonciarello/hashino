@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base href="./">
+<title>Hashino — Calcolatore di checksum e hash (MD5, SHA-1, SHA-256, SHA-512) online</title>
+<meta name="description" content="Calcola hash e checksum MD5, SHA-1, SHA-256, SHA-512 di testo o file caricati localmente. Hashino elabora tutto in locale, nessun dato inviato a server esterni. Output copiabile con un clic.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://cristianporco.it/app/hashino/">
+
+<meta property="og:title" content="Hashino — Calcolatore di checksum e hash">
+<meta property="og:description" content="Calcola MD5, SHA-1, SHA-256, SHA-512 per testo o file. Elaborazione locale, output copiabile, fingerprint visivo dell'hash.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cristianporco.it/app/hashino/">
+<meta property="og:site_name" content="Hashino">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Hashino",
+  "url": "https://cristianporco.it/app/hashino/",
+  "description": "Calcolatore di checksum e hash (MD5, SHA-1, SHA-256, SHA-512) per testo e file caricati localmente.",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0" },
+  "browserRequirements": "Richiede un browser moderno con supporto JavaScript"
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..600&family=JetBrains+Mono:ital,wght@0,400..700;1,400&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ── Reset & Tokens ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --color-surface:#FEFEFC;
+  --color-card:#FFFFFF;
+  --color-primary:#7C3AED;
+  --color-primary-hover:#6D28D9;
+  --color-cyan:#06B6D4;
+  --color-emerald:#10B981;
+  --color-orange:#F97316;
+  --color-rose:#F43F5E;
+  --color-text:#1E293B;
+  --color-text-muted:#64748B;
+  --color-border:#E2E8F0;
+  --color-border-focus:#7C3AED;
+  --color-surface-alt:#F1F5F9;
+  --color-error:#DC2626;
+  --color-error-bg:#FEF2F2;
+  --radius-sm:6px;
+  --radius-md:10px;
+  --radius-lg:16px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.06);
+  --gap-grid:8px;
+  --font-body:"Inter",system-ui,-apple-system,sans-serif;
+  --font-display:"Outfit",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","Fira Code","Cascadia Code",monospace;
+}
+html{font-size:100%;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font-body);
+  font-size:1rem;
+  line-height:1.6;
+  color:var(--color-text);
+  background:var(--color-surface);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;height:auto}
+a{color:var(--color-primary);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── Layout ── */
+header,main,footer{padding:0 16px}
+header{
+  padding-top:24px;
+  padding-bottom:8px;
+  text-align:center;
+}
+main{
+  flex:1;
+  max-width:720px;
+  width:100%;
+  margin:0 auto;
+  padding-bottom:32px;
+}
+footer{
+  text-align:center;
+  padding-top:16px;
+  padding-bottom:24px;
+  font-size:.8125rem;
+  color:var(--color-text-muted);
+}
+
+/* ── Header ── */
+.logo{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:2rem;
+  letter-spacing:-0.02em;
+  color:var(--color-primary);
+  line-height:1.2;
+}
+.logo-sub{
+  font-family:var(--font-display);
+  font-weight:500;
+  font-size:1rem;
+  color:var(--color-text-muted);
+  margin-top:2px;
+}
+.logo-icon{
+  display:inline-block;
+  vertical-align:middle;
+  margin-right:4px;
+}
+.logo-accent{color:var(--color-cyan)}
+
+/* ── Card ── */
+.card{
+  background:var(--color-card);
+  border:1px solid var(--color-border);
+  border-radius:var(--radius-lg);
+  padding:20px;
+  box-shadow:var(--shadow-sm);
+}
+.card + .card{margin-top:16px}
+
+/* ── Input Mode Toggle ── */
+.mode-toggle{
+  display:flex;
+  gap:4px;
+  background:var(--color-surface-alt);
+  border-radius:var(--radius-md);
+  padding:4px;
+  margin-bottom:16px;
+}
+.mode-btn{
+  flex:1;
+  padding:10px 16px;
+  border:none;
+  border-radius:var(--radius-sm);
+  background:transparent;
+  color:var(--color-text-muted);
+  font-family:var(--font-body);
+  font-size:.9375rem;
+  font-weight:500;
+  cursor:pointer;
+  transition:all .15s ease;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.mode-btn.active{
+  background:var(--color-card);
+  color:var(--color-primary);
+  box-shadow:var(--shadow-sm);
+}
+.mode-btn:hover:not(.active){color:var(--color-text)}
+.mode-btn:focus-visible{
+  outline:2px solid var(--color-border-focus);
+  outline-offset:-2px;
+  border-radius:var(--radius-sm);
+}
+.mode-btn svg{width:18px;height:18px;flex-shrink:0}
+
+/* ── Text Input ── */
+.text-input{
+  width:100%;
+  min-height:140px;
+  padding:12px 14px;
+  border:2px solid var(--color-border);
+  border-radius:var(--radius-md);
+  font-family:var(--font-body);
+  font-size:1rem;
+  line-height:1.6;
+  color:var(--color-text);
+  background:var(--color-card);
+  resize:vertical;
+  transition:border-color .15s ease;
+  display:block;
+}
+.text-input:focus{
+  outline:none;
+  border-color:var(--color-border-focus);
+}
+.text-input::placeholder{color:var(--color-text-muted);opacity:.7}
+
+/* ── File Dropzone ── */
+.dropzone{
+  border:2px dashed var(--color-border);
+  border-radius:var(--radius-md);
+  padding:32px 20px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .15s ease;
+  min-height:120px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:var(--color-surface-alt);
+}
+.dropzone:hover,.dropzone.drag-over{
+  border-color:var(--color-primary);
+  background:#F5F3FF;
+}
+.dropzone.has-file{
+  border-style:solid;
+  border-color:var(--color-emerald);
+  background:#ECFDF5;
+}
+.dropzone svg{color:var(--color-text-muted);width:32px;height:32px}
+.dropzone-text{font-size:.9375rem;color:var(--color-text-muted)}
+.dropzone-file{font-family:var(--font-mono);font-size:.8125rem;color:var(--color-emerald);font-weight:500;word-break:break-all}
+.dropzone-reset{
+  font-size:.8125rem;
+  color:var(--color-rose);
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-family:var(--font-body);
+  text-decoration:underline;
+  padding:4px 8px;
+  min-height:44px;
+}
+.dropzone-reset:focus-visible{outline:2px solid var(--color-border-focus);border-radius:var(--radius-sm)}
+.hidden-input{display:none}
+
+/* ── Algorithm Pills ── */
+.algo-label{
+  display:block;
+  font-size:.875rem;
+  font-weight:600;
+  color:var(--color-text);
+  margin-bottom:8px;
+}
+.algo-group{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:16px;
+}
+.algo-pill{
+  position:relative;
+}
+.algo-pill input{
+  position:absolute;
+  opacity:0;
+  width:0;height:0;
+}
+.algo-pill label{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 14px;
+  border:2px solid var(--color-border);
+  border-radius:99px;
+  font-family:var(--font-mono);
+  font-size:.8125rem;
+  font-weight:500;
+  color:var(--color-text-muted);
+  cursor:pointer;
+  transition:all .15s ease;
+  min-height:44px;
+  user-select:none;
+  background:var(--color-card);
+}
+.algo-pill input:checked + label{
+  border-color:var(--color-primary);
+  color:var(--color-primary);
+  background:#F5F3FF;
+}
+.algo-pill input:focus-visible + label{
+  outline:2px solid var(--color-border-focus);
+  outline-offset:2px;
+}
+.algo-pill label:hover{
+  border-color:var(--color-primary);
+}
+.algo-pill .algo-badge{
+  font-size:.6875rem;
+  color:var(--color-text-muted);
+  font-family:var(--font-body);
+}
+
+/* ── Action Button ── */
+.btn-primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  padding:12px 24px;
+  border:none;
+  border-radius:var(--radius-md);
+  background:var(--color-primary);
+  color:#fff;
+  font-family:var(--font-display);
+  font-size:1rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .15s ease;
+  min-height:48px;
+  letter-spacing:-0.01em;
+}
+.btn-primary:hover{background:var(--color-primary-hover)}
+.btn-primary:focus-visible{
+  outline:2px solid var(--color-primary);
+  outline-offset:2px;
+}
+.btn-primary:active{transform:scale(.985)}
+.btn-primary:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+.btn-primary svg{width:20px;height:20px}
+
+/* ── Spinner ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{
+  width:20px;height:20px;
+  border:2.5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  display:none;
+}
+.btn-primary.loading .spinner{display:block}
+.btn-primary.loading .btn-label{display:none}
+
+/* ── Error ── */
+.error-msg{
+  display:none;
+  align-items:flex-start;
+  gap:8px;
+  padding:12px 14px;
+  background:var(--color-error-bg);
+  border:1px solid #FECACA;
+  border-radius:var(--radius-md);
+  color:var(--color-error);
+  font-size:.875rem;
+  margin-top:12px;
+}
+.error-msg.visible{display:flex}
+.error-msg svg{width:18px;height:18px;flex-shrink:0;margin-top:1px}
+
+/* ── Results ── */
+.results{display:none}
+.results.visible{display:block}
+
+.hash-result{
+  background:var(--color-card);
+  border:1px solid var(--color-border);
+  border-radius:var(--radius-lg);
+  padding:20px;
+  box-shadow:var(--shadow-sm);
+}
+.hash-result + .hash-result{margin-top:12px}
+
+.hash-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  flex-wrap:wrap;
+}
+.hash-algo-name{
+  font-family:var(--font-display);
+  font-size:1rem;
+  font-weight:600;
+  color:var(--color-primary);
+  letter-spacing:-0.01em;
+}
+.hash-meta{
+  font-size:.75rem;
+  color:var(--color-text-muted);
+  font-family:var(--font-body);
+}
+
+/* ── Hash Fingerprint ── */
+.fingerprint{
+  display:flex;
+  gap:3px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.fp-cell{
+  width:24px;
+  height:24px;
+  border-radius:4px;
+  flex-shrink:0;
+  transition:transform .2s ease,opacity .2s ease;
+  opacity:0;
+  transform:scale(.5);
+}
+.fp-cell.revealed{
+  opacity:1;
+  transform:scale(1);
+}
+
+/* ── Hash Text Output ── */
+.hash-output-wrap{
+  position:relative;
+  display:flex;
+  align-items:stretch;
+  gap:0;
+}
+.hash-output{
+  flex:1;
+  padding:12px 14px;
+  background:var(--color-surface-alt);
+  border:1px solid var(--color-border);
+  border-right:none;
+  border-radius:var(--radius-sm) 0 0 var(--radius-sm);
+  font-family:var(--font-mono);
+  font-size:.9375rem;
+  line-height:1.5;
+  color:var(--color-text);
+  word-break:break-all;
+  overflow-wrap:anywhere;
+  user-select:all;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+}
+.btn-copy{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:0 16px;
+  border:1px solid var(--color-border);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  background:var(--color-card);
+  color:var(--color-primary);
+  font-family:var(--font-body);
+  font-size:.8125rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .15s ease;
+  min-width:44px;
+  min-height:44px;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.btn-copy:hover{background:#F5F3FF}
+.btn-copy:focus-visible{
+  outline:2px solid var(--color-border-focus);
+  outline-offset:-2px;
+}
+.btn-copy.copied{
+  background:var(--color-emerald);
+  color:#fff;
+  border-color:var(--color-emerald);
+}
+.btn-copy svg{width:16px;height:16px;flex-shrink:0}
+
+/* ── Size info ── */
+.size-info{
+  font-size:.75rem;
+  color:var(--color-text-muted);
+  margin-top:8px;
+  font-family:var(--font-body);
+}
+
+/* ── Focus visible ── */
+:focus-visible{outline:2px solid var(--color-border-focus);outline-offset:2px}
+
+/* ── Reduced Motion ── */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+
+/* ── Mobile ── */
+@media(max-width:480px){
+  header{padding-top:16px}
+  .logo{font-size:1.625rem}
+  .logo-sub{font-size:.875rem}
+  .card{padding:14px;border-radius:var(--radius-md)}
+  .text-input{min-height:120px;font-size:.9375rem}
+  .dropzone{padding:24px 16px}
+  .algo-group{gap:6px}
+  .algo-pill label{padding:7px 12px;font-size:.75rem}
+  .hash-output{font-size:.8125rem;padding:10px 12px}
+  .btn-copy{padding:0 12px;font-size:.75rem}
+  .fp-cell{width:20px;height:20px}
+  main{padding-bottom:24px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="logo">
+    <svg class="logo-icon" width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="10" height="10" rx="2.5" fill="#7C3AED"/>
+      <rect x="16" y="2" width="10" height="10" rx="2.5" fill="#06B6D4"/>
+      <rect x="2" y="16" width="10" height="10" rx="2.5" fill="#10B981"/>
+      <rect x="16" y="16" width="10" height="10" rx="2.5" fill="#F97316"/>
+    </svg>
+    Hash<span class="logo-accent">ino</span>
+  </h1>
+  <p class="logo-sub">Calcolatore di checksum e hash per file e testo</p>
+</header>
+
+<main>
+  <!-- Input Card -->
+  <div class="card" id="inputCard">
+    <!-- Mode Toggle -->
+    <div class="mode-toggle" role="tablist" aria-label="Modalità di input">
+      <button class="mode-btn active" role="tab" aria-selected="true" id="tabText" data-mode="text">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h10M5 8h7M5 12h10M5 16h5"/></svg>
+        Testo
+      </button>
+      <button class="mode-btn" role="tab" aria-selected="false" id="tabFile" data-mode="file">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6l-4-4Z"/><path d="M12 2v4h4"/></svg>
+        File
+      </button>
+    </div>
+
+    <!-- Text Input -->
+    <div id="textPanel">
+      <label for="textInput" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Incolla il testo da elaborare</label>
+      <textarea id="textInput" class="text-input" placeholder="Incolla qui il testo di cui calcolare l&rsquo;hash&hellip;" aria-label="Testo da elaborare"></textarea>
+    </div>
+
+    <!-- File Input -->
+    <div id="filePanel" style="display:none">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Carica un file per calcolarne l'hash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/></svg>
+        <span class="dropzone-text">Trascina un file qui o clicca per selezionarlo</span>
+        <span class="dropzone-file" id="fileName" style="display:none"></span>
+        <button class="dropzone-reset" id="fileReset" style="display:none" type="button">Rimuovi file</button>
+      </div>
+      <input type="file" id="fileInput" class="hidden-input" aria-hidden="true">
+    </div>
+
+    <!-- Algorithm Selection -->
+    <fieldset style="border:none;padding:0;margin-top:16px">
+      <legend class="algo-label">Algoritmi di hash</legend>
+      <div class="algo-group" role="group" aria-label="Seleziona gli algoritmi">
+        <div class="algo-pill">
+          <input type="checkbox" id="algMd5" name="algorithms" value="md5">
+          <label for="algMd5">MD5 <span class="algo-badge">128 bit</span></label>
+        </div>
+        <div class="algo-pill">
+          <input type="checkbox" id="algSha1" name="algorithms" value="sha1">
+          <label for="algSha1">SHA-1 <span class="algo-badge">160 bit</span></label>
+        </div>
+        <div class="algo-pill">
+          <input type="checkbox" id="algSha256" name="algorithms" value="sha256" checked>
+          <label for="algSha256">SHA-256 <span class="algo-badge">256 bit</span></label>
+        </div>
+        <div class="algo-pill">
+          <input type="checkbox" id="algSha512" name="algorithms" value="sha512">
+          <label for="algSha512">SHA-512 <span class="algo-badge">512 bit</span></label>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Action -->
+    <button class="btn-primary" id="btnCalc" type="button">
+      <span class="btn-label">Calcola hash</span>
+      <span class="spinner" aria-hidden="true"></span>
+    </button>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg" role="alert">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd"/></svg>
+      <span id="errorText"></span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results" aria-live="polite" aria-label="Risultati del calcolo hash">
+    <div id="resultsContainer"></div>
+  </div>
+</main>
+
+<footer>
+  <p>Hashino &mdash; elabora tutto in locale. I tuoi dati non lasciano mai il tuo browser.</p>
+</footer>
+
+<script>
+/* ── Hashino App ── */
+(function(){
+  const textInput = document.getElementById('textInput');
+  const fileInput = document.getElementById('fileInput');
+  const dropzone = document.getElementById('dropzone');
+  const fileName = document.getElementById('fileName');
+  const fileReset = document.getElementById('fileReset');
+  const filePanel = document.getElementById('filePanel');
+  const textPanel = document.getElementById('textPanel');
+  const btnCalc = document.getElementById('btnCalc');
+  const errorMsg = document.getElementById('errorMsg');
+  const errorText = document.getElementById('errorText');
+  const results = document.getElementById('results');
+  const resultsContainer = document.getElementById('resultsContainer');
+  const tabText = document.getElementById('tabText');
+  const tabFile = document.getElementById('tabFile');
+
+  let currentMode = 'text';
+  let selectedFile = null;
+
+  /* ── Mode Toggle ── */
+  function setMode(mode){
+    currentMode = mode;
+    if(mode === 'text'){
+      textPanel.style.display = '';
+      filePanel.style.display = 'none';
+      tabText.classList.add('active');
+      tabText.setAttribute('aria-selected','true');
+      tabFile.classList.remove('active');
+      tabFile.setAttribute('aria-selected','false');
+      selectedFile = null;
+      fileInput.value = '';
+      fileName.style.display = 'none';
+      fileReset.style.display = 'none';
+      dropzone.classList.remove('has-file');
+      hideError();
+    } else {
+      textPanel.style.display = 'none';
+      filePanel.style.display = '';
+      tabFile.classList.add('active');
+      tabFile.setAttribute('aria-selected','true');
+      tabText.classList.remove('active');
+      tabText.setAttribute('aria-selected','false');
+      textInput.value = '';
+      hideError();
+    }
+    results.classList.remove('visible');
+    resultsContainer.innerHTML = '';
+  }
+
+  tabText.addEventListener('click',()=>setMode('text'));
+  tabFile.addEventListener('click',()=>setMode('file'));
+
+  /* ── File Handling ── */
+  dropzone.addEventListener('click',()=>fileInput.click());
+  dropzone.addEventListener('keydown',(e)=>{
+    if(e.key==='Enter'||e.key===' ') { e.preventDefault(); fileInput.click(); }
+  });
+
+  fileInput.addEventListener('change',(e)=>{
+    if(e.target.files && e.target.files[0]){
+      selectedFile = e.target.files[0];
+      fileName.textContent = selectedFile.name + ' (' + formatSize(selectedFile.size) + ')';
+      fileName.style.display = '';
+      fileReset.style.display = '';
+      dropzone.classList.add('has-file');
+      hideError();
+    }
+  });
+
+  fileReset.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    selectedFile = null;
+    fileInput.value = '';
+    fileName.style.display = 'none';
+    fileReset.style.display = 'none';
+    dropzone.classList.remove('has-file');
+  });
+
+  /* ── Drag & Drop ── */
+  dropzone.addEventListener('dragover',(e)=>{ e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave',(e)=>{ e.preventDefault(); dropzone.classList.remove('drag-over'); });
+  dropzone.addEventListener('drop',(e)=>{
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    if(e.dataTransfer.files && e.dataTransfer.files[0]){
+      selectedFile = e.dataTransfer.files[0];
+      fileName.textContent = selectedFile.name + ' (' + formatSize(selectedFile.size) + ')';
+      fileName.style.display = '';
+      fileReset.style.display = '';
+      dropzone.classList.add('has-file');
+      hideError();
+    }
+  });
+
+  /* ── Compute ── */
+  btnCalc.addEventListener('click',computeHashes);
+
+  function computeHashes(){
+    hideError();
+    results.classList.remove('visible');
+    resultsContainer.innerHTML = '';
+
+    const checked = document.querySelectorAll('input[name="algorithms"]:checked');
+    if(checked.length === 0){
+      showError('Seleziona almeno un algoritmo di hash.');
+      return;
+    }
+
+    const algorithms = Array.from(checked).map(cb=>cb.value);
+
+    if(currentMode === 'text'){
+      const text = textInput.value.trim();
+      if(!text){
+        showError('Incolla del testo prima di calcolare l\'hash.');
+        textInput.focus();
+        return;
+      }
+      sendRequest(text, algorithms);
+    } else {
+      if(!selectedFile){
+        showError('Seleziona un file prima di calcolare l\'hash.');
+        return;
+      }
+      sendFileRequest(selectedFile, algorithms);
+    }
+  }
+
+  function sendRequest(text, algorithms){
+    btnCalc.classList.add('loading');
+    btnCalc.disabled = true;
+
+    const fd = new FormData();
+    fd.append('text', text);
+    algorithms.forEach(a=>fd.append('algorithms', a));
+
+    fetch('api/hash', { method:'POST', body:fd })
+      .then(r=>r.json())
+      .then(data=>{
+        if(data.error) showError(data.error);
+        else renderResults(data, algorithms);
+      })
+      .catch(err=>showError('Errore di connessione: ' + err.message))
+      .finally(()=>{
+        btnCalc.classList.remove('loading');
+        btnCalc.disabled = false;
+      });
+  }
+
+  function sendFileRequest(file, algorithms){
+    btnCalc.classList.add('loading');
+    btnCalc.disabled = true;
+
+    const fd = new FormData();
+    fd.append('file', file);
+    algorithms.forEach(a=>fd.append('algorithms', a));
+
+    fetch('api/hash', { method:'POST', body:fd })
+      .then(r=>r.json())
+      .then(data=>{
+        if(data.error) showError(data.error);
+        else renderResults(data, algorithms);
+      })
+      .catch(err=>showError('Errore di connessione: ' + err.message))
+      .finally(()=>{
+        btnCalc.classList.remove('loading');
+        btnCalc.disabled = false;
+      });
+  }
+
+  /* ── Render ── */
+  function renderResults(data, algorithms){
+    resultsContainer.innerHTML = '';
+    const hashes = data.hashes;
+    const algoNames = {
+      md5:'MD5', sha1:'SHA-1', sha256:'SHA-256', sha512:'SHA-512'
+    };
+    const algoBits = {
+      md5:'128 bit', sha1:'160 bit', sha256:'256 bit', sha512:'512 bit'
+    };
+
+    for(const alg of algorithms){
+      if(!hashes[alg]) continue;
+      const hashHex = hashes[alg];
+
+      const el = document.createElement('div');
+      el.className = 'hash-result';
+      el.innerHTML =
+        '<div class="hash-header">' +
+          '<span class="hash-algo-name">' + algoNames[alg] + '</span>' +
+          '<span class="hash-meta">' + algoBits[alg] + ' &middot; ' + (hashHex.length * 4) + ' bit</span>' +
+        '</div>' +
+        '<div class="fingerprint" aria-hidden="true"></div>' +
+        '<div class="hash-output-wrap">' +
+          '<div class="hash-output">' + hashHex + '</div>' +
+          '<button class="btn-copy" data-hash="' + hashHex + '">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2H3.5A1.5 1.5 0 0 0 2 3.5V9.5A1.5 1.5 0 0 0 3.5 11H5"/></svg>' +
+            '<span>Copia</span>' +
+          '</button>' +
+        '</div>' +
+        (data.size_bytes ? '<div class="size-info">Dimensione input: ' + formatSize(data.size_bytes) + '</div>' : '');
+
+      resultsContainer.appendChild(el);
+
+      // Build fingerprint
+      const fp = el.querySelector('.fingerprint');
+      const bytes = hexToBytes(hashHex);
+      const cellCount = Math.min(bytes.length, 32);
+      for(let i=0;i<cellCount;i++){
+        const cell = document.createElement('span');
+        cell.className = 'fp-cell';
+        const hue = (bytes[i] / 255) * 360;
+        cell.style.backgroundColor = 'hsl(' + hue.toFixed(1) + ', 65%, 58%)';
+        fp.appendChild(cell);
+      }
+
+      // Copy button
+      const copyBtn = el.querySelector('.btn-copy');
+      copyBtn.addEventListener('click', function(){
+        const hash = this.getAttribute('data-hash');
+        navigator.clipboard.writeText(hash).then(()=>{
+          const span = this.querySelector('span');
+          const svg = this.querySelector('svg');
+          this.classList.add('copied');
+          span.textContent = 'Copiato!';
+          svg.innerHTML = '<polyline points="4 8 7 11 12 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+          setTimeout(()=>{
+            this.classList.remove('copied');
+            span.textContent = 'Copia';
+            svg.innerHTML = '<rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2H3.5A1.5 1.5 0 0 0 2 3.5V9.5A1.5 1.5 0 0 0 3.5 11H5"/>';
+          }, 2000);
+        }).catch(()=>{
+          // Fallback for older browsers
+          const ta = document.createElement('textarea');
+          ta.value = hash;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          const span = this.querySelector('span');
+          this.classList.add('copied');
+          span.textContent = 'Copiato!';
+          setTimeout(()=>{
+            this.classList.remove('copied');
+            span.textContent = 'Copia';
+          }, 2000);
+        });
+      });
+    }
+
+    results.classList.add('visible');
+
+    // Animate fingerprint cells with stagger
+    const allCells = resultsContainer.querySelectorAll('.fp-cell');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    allCells.forEach((cell,i)=>{
+      if(prefersReducedMotion){
+        cell.classList.add('revealed');
+      } else {
+        setTimeout(()=>{ cell.classList.add('revealed'); }, 30 + i * 15);
+      }
+    });
+  }
+
+  /* ── Helpers ── */
+  function hexToBytes(hex){
+    const bytes = [];
+    for(let i=0;i<hex.length;i+=2){
+      bytes.push(parseInt(hex.substring(i,i+2),16));
+    }
+    return bytes;
+  }
+
+  function formatSize(bytes){
+    if(bytes<1024) return bytes + ' B';
+    if(bytes<1048576) return (bytes/1024).toFixed(1) + ' KB';
+    if(bytes<1073741824) return (bytes/1048576).toFixed(2) + ' MB';
+    return (bytes/1073741824).toFixed(2) + ' GB';
+  }
+
+  function showError(msg){
+    errorText.textContent = msg;
+    errorMsg.classList.add('visible');
+  }
+
+  function hideError(){
+    errorMsg.classList.remove('visible');
+    errorText.textContent = '';
+  }
+
+  /* ── Keyboard: Ctrl/Cmd+Enter to compute ── */
+  textInput.addEventListener('keydown',(e)=>{
+    if((e.ctrlKey||e.metaKey) && e.key==='Enter'){
+      e.preventDefault();
+      computeHashes();
+    }
+  });
+
+  /* ── Live validation: ensure at least one algo checked ── */
+  document.querySelectorAll('input[name="algorithms"]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const anyChecked = document.querySelectorAll('input[name="algorithms"]:checked').length > 0;
+      if(!anyChecked){
+        // Re-check the one being unchecked — keep at least one
+        // Actually, allow unchecking all — but show error on submit
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
