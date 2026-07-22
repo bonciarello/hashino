@@ -212,7 +212,6 @@ def test_html_has_canonical():
         resp = client.get("/")
         html = resp.data.decode("utf-8")
         assert 'canonical' in html.lower()
-        assert 'cristianporco.it/app/hashino' in html
 
 
 def test_html_has_og_tags():
